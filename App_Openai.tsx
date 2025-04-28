@@ -1,35 +1,30 @@
-import {StyleSheet,Text,View,TextInput,TouchableOpacity,Platform,StatusBar,ScrollView,ActivityIndicator,Alert,Keyboard,} from "react-native";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+import {
+  StyleSheet,
+  Text,
+  View,
+  TextInput,
+  TouchableOpacity,
+  Platform,
+  StatusBar,
+  ScrollView,
+  ActivityIndicator,
+  Alert,
+  Keyboard,
+} from "react-native";
+import { MaterialIcons } from "@expo/vector-icons";
 import { useState } from "react";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const alturaStatusBar = StatusBar.currentHeight;
-const KEY_GEMINI = "AIzaSyCxpnbCDisIk-6ypTxzTDLI58wVG0776J4";
-
-const genAI = new GoogleGenerativeAI(KEY_GEMINI);
-
-const model = genAI.getGenerativeModel({
-  model: "gemini-1.5-flash",
-});
-
-const generationConfig = {
-  temperature: 1,
-  topP: 0.95,
-  topK: 64,
-  maxOutputTokens: 500,
-  responseMimeType: "text/plain",
-};
 
 export default function App() {
-  const [tituloReceita, setTituloReceita] = useState("");
-  const [load, setLoad] = useState(false);
-  const [receita, setReceita] = useState("");
+  const [load, defLoad] = useState(false);
+  const [receita, defReceita] = useState("");
 
-  const [ingr1, setIngr1] = useState("");
-  const [ingr2, setIngr2] = useState("");
-  const [ingr3, setIngr3] = useState("");
-  const [ingr4, setIngr4] = useState("");
-  const [ocasiao, setOcasiao] = useState("");
+  const [ingr1, defIngr1] = useState("");
+  const [ingr2, defIngr2] = useState("");
+  const [ingr3, defIngr3] = useState("");
+  const [ingr4, defIngr4] = useState("");
+  const [ocasiao, defOcasiao] = useState("");
 
   async function gerarReceita() {
     if (
@@ -44,40 +39,46 @@ export default function App() {
       ]);
       return;
     }
-    setReceita("");
-    setTituloReceita("");
-    setLoad(true);
+    defReceita("");
+    defLoad(true);
     Keyboard.dismiss();
-
-    const prompt = `Sugira uma receita detalhada para o ${ocasiao} usando os ingredientes: ${ingr1}, ${ingr2}, ${ingr3} e ${ingr4} e pesquise a receita no YouTube. Caso encontre, informe o link.
-    
-    FORMATO DE RESPOSTA:
-    Título da receita na primeira linha.
-    Em seguida, o modo de preparo separado em parágrafos.`;
-
-    try {
-      const chatSession = model.startChat({
-        generationConfig,
-        history: [],
-      });
-
-      const result = await chatSession.sendMessage(prompt);
-      const respostaCompleta = result.response.text();
-
-      const linhas = respostaCompleta.split('\n');
-      const tituloExtraido = linhas[0];
-      const conteudoExtraido = linhas.slice(1).join('\n');
-      
-      setTituloReceita(tituloExtraido);
-      setReceita(conteudoExtraido);
-
-    } catch (error) {
-      console.error(error);
-      Alert.alert("Erro", "Não foi possível gerar a receita. Tente novamente.");
-    } finally {
-      setLoad(false);
-    }
   }
+
+  const KEY_GPT =
+    "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";
+
+  const prompt = `Sugira uma receita detalhada para o ${ocasiao} usando os ingredientes: ${ingr1}, ${ingr2}, ${ingr3} e ${ingr4} e pesquise a receita no YouTube. Caso encontre, informe o link.`;
+
+  fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${KEY_GPT}`,
+    },
+    body: JSON.stringify({
+      model: "gpt-3.5-turbo",
+      messages: [
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+      temperature: 0.2,
+      max_tokens: 500,
+      top_p: 1,
+    }),
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      console.log(data.choices[0].message.content);
+      defReceita(data.choices[0].message.content);
+    })
+    .catch((error) => {
+      console.log(error);
+    })
+    .finally(() => {
+      defLoad(false);
+    });
 
   return (
     <View style={ESTILOS.container}>
@@ -93,43 +94,41 @@ export default function App() {
           placeholder="Ingrediente 1"
           style={ESTILOS.input}
           value={ingr1}
-          onChangeText={(texto) => setIngr1(texto)}
+          onChangeText={(texto) => defIngr1(texto)}
         />
         <TextInput
           placeholder="Ingrediente 2"
           style={ESTILOS.input}
           value={ingr2}
-          onChangeText={(texto) => setIngr2(texto)}
+          onChangeText={(texto) => defIngr2(texto)}
         />
         <TextInput
           placeholder="Ingrediente 3"
           style={ESTILOS.input}
           value={ingr3}
-          onChangeText={(texto) => setIngr3(texto)}
+          onChangeText={(texto) => defIngr3(texto)}
         />
         <TextInput
           placeholder="Ingrediente 4"
           style={ESTILOS.input}
           value={ingr4}
-          onChangeText={(texto) => setIngr4(texto)}
+          onChangeText={(texto) => defIngr4(texto)}
         />
         <TextInput
           placeholder="Almoço ou Jantar"
           style={ESTILOS.input}
           value={ocasiao}
-          onChangeText={(texto) => setOcasiao(texto)}
+          onChangeText={(texto) => defOcasiao(texto)}
         />
       </View>
-
       <TouchableOpacity style={ESTILOS.button} onPress={gerarReceita}>
         <Text style={ESTILOS.buttonText}>Gerar receita</Text>
-        <MaterialCommunityIcons name="food-variant" size={24} color="#FFF" />
+        <MaterialIcons name="travel-explore" size={24} color="#FFF" />
       </TouchableOpacity>
-
       <ScrollView
+        showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 24, marginTop: 4 }}
         style={ESTILOS.containerScroll}
-        showsVerticalScrollIndicator={false}
       >
         {load && (
           <View style={ESTILOS.content}>
@@ -140,8 +139,8 @@ export default function App() {
 
         {receita && (
           <View style={ESTILOS.content}>
-            <Text style={ESTILOS.receitaTitulo}>{tituloReceita}</Text>
-            <Text style={ESTILOS.receitaTexto}>{receita}</Text>
+            <Text style={ESTILOS.title}>Sua receita 👇</Text>
+            <Text style={{ lineHeight: 24 }}>{receita} </Text>
           </View>
         )}
       </ScrollView>
@@ -183,7 +182,7 @@ const ESTILOS = StyleSheet.create({
     marginBottom: 16,
   },
   button: {
-    backgroundColor: "blue",
+    backgroundColor: "#F0E68C",
     width: "90%",
     borderRadius: 8,
     flexDirection: "row",
@@ -213,16 +212,5 @@ const ESTILOS = StyleSheet.create({
   containerScroll: {
     width: "90%",
     marginTop: 8,
-  },
-  receitaTitulo: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    color: 'darkblue',
-    marginBottom: 16,
-  },
-  receitaTexto: {
-    fontSize: 16,
-    lineHeight: 24,
   },
 });
