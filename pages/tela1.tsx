@@ -21,6 +21,7 @@ const configuracoesGeracao = {
 };
 
 export default function TelaCardapio() {
+  const [tituloReceita, setTituloReceita] = useState("");
   const [dieta, setDieta] = useState("");
   const [numPessoas, setNumPessoas] = useState("");
   const [restricoes, setRestricoes] = useState("");
@@ -34,10 +35,16 @@ export default function TelaCardapio() {
     }
 
     setCardapio("");
+    setTituloReceita("");
     setCarregando(true);
     Keyboard.dismiss();
 
-    const prompt = `Crie um cardápio semanal para ${numPessoas} pessoas, com dieta ${dieta}, e levando em consideração as restrições alimentares: ${restricoes}.`;
+    const prompt = `Crie um cardápio semanal para ${numPessoas} pessoas, com dieta ${dieta}, e levando em consideração as restrições alimentares: ${restricoes}.
+    
+     FORMATO DE RESPOSTA:
+    Título da receita na primeira linha.
+    Em seguida, o modo de preparo separado em parágrafos.`;
+
 
     try {
       const sessaoChat = modelo.startChat({
@@ -47,6 +54,13 @@ export default function TelaCardapio() {
 
       const resultado = await sessaoChat.sendMessage(prompt);
       const respostaCompleta = resultado.response.text();
+
+      const linhas = respostaCompleta.split('\n');
+      const tituloExtraido = linhas[0];
+      const conteudoExtraido = linhas.slice(1).join('\n');
+      
+      setTituloReceita(tituloExtraido);
+      setCardapio(conteudoExtraido);
 
       setCardapio(respostaCompleta);
     } catch (error) {
@@ -107,6 +121,7 @@ export default function TelaCardapio() {
         {cardapio !== "" && (
           <View style={ESTILOS.content}>
             <Text style={ESTILOS.titulo}>Cardápio Gerado:</Text>
+            <Text style={ESTILOS.receitaTitulo}>{tituloReceita}</Text>
             <Text style={ESTILOS.receitaTexto}>{cardapio}</Text>
           </View>
         )}
@@ -181,6 +196,13 @@ const ESTILOS = StyleSheet.create({
     marginTop: 8,
   },
   titulo: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    color: 'darkblue',
+    marginBottom: 16,
+  },
+  receitaTitulo: {
     fontSize: 24,
     fontWeight: 'bold',
     textAlign: 'center',

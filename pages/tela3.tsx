@@ -1,4 +1,4 @@
-import {StyleSheet,Text,View,TextInput,TouchableOpacity,Platform,StatusBar,ScrollView,ActivityIndicator,Alert,Keyboard,} from "react-native";
+import {StyleSheet, Text, View, TextInput, TouchableOpacity, Platform, StatusBar, ScrollView, ActivityIndicator, Alert, Keyboard} from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useState } from "react";
 import { GoogleGenerativeAI } from "@google/generative-ai";
@@ -20,49 +20,65 @@ const generationConfig = {
   responseMimeType: "text/plain",
 };
 
-export default function ListaCompras() {
+export default function Viagem() {
   const [load, setLoad] = useState(false);
-  const [ingredientes, setIngredientes] = useState("");
+  const [viagem, setViagem] = useState("");
+  const [tituloViagem, setTituloViagem] = useState("");
 
-  const [ingr1, setIngr1] = useState("");
-  const [ingr2, setIngr2] = useState("");
-  const [ingr3, setIngr3] = useState("");
-  const [ingr4, setIngr4] = useState("");
-  const [ocasiao, setOcasiao] = useState("");
+  const [tipoViagem, setTipoViagem] = useState("");
+  const [estiloHospedagem, setEstiloHospedagem] = useState("");
+  const [climaDesejado, setClimaDesejado] = useState("");
+  const [orcamento, setOrcamento] = useState("");
 
-  async function gerarReceita() {
+  async function gerarRoteiro() {
     if (
-      ingr1 === "" ||
-      ingr2 === "" ||
-      ingr3 === "" ||
-      ingr4 === "" ||
-      ocasiao === ""
+      tipoViagem === "" ||
+      estiloHospedagem === "" ||
+      climaDesejado === "" ||
+      orcamento === ""
     ) {
-      Alert.alert("Atenção", "Informe todos os ingredientes!", [
+      Alert.alert("Atenção", "Informe todos os dados!", [
         { text: "Beleza!" },
       ]);
       return;
     }
-    setIngredientes("");
+    setViagem("");
+    setTituloViagem("");
     setLoad(true);
     Keyboard.dismiss();
 
-    const prompt = `Monte uma lista de compras semanal baseada nos seguintes itens ou preferências: ${ingr1}, ${ingr2}, ${ingr3} e ${ingr4} para essa ${ocasiao}.`;
-
+    const prompt = `
+    Sugira uma viagem considerando: ${tipoViagem}, ${estiloHospedagem}, ${climaDesejado}, ${orcamento}.
+    
+    IMPORTANTE:
+    - Primeiro escreva o nome da viagem (exemplo: "Roteiro para as Montanhas Geladas"), depois uma quebra de linha (\n).
+    - Em seguida, descreva o roteiro de forma detalhada.
+    - No final, se possível, adicione um link do YouTube relacionado.
+    `;
+    
     try {
-        const chatSession = model.startChat({
-          generationConfig,
-          history: [],
-        });
-  
-        const result = await chatSession.sendMessage(prompt);
-        setIngredientes(result.response.text());
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoad(false);
-      }
+      const chatSession = model.startChat({
+        generationConfig,
+        history: [],
+      });
+
+      const resultado = await chatSession.sendMessage(prompt);
+      const respostaCompleta = resultado.response.text();
+
+      const linhas = respostaCompleta.split('\n');
+      const tituloExtraido = linhas[0];
+      const conteudoExtraido = linhas.slice(1).join('\n');
+      
+      setTituloViagem(tituloExtraido);
+      setViagem(conteudoExtraido);
+
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Erro", "Não foi possível gerar o roteiro.");
+    } finally {
+      setLoad(false);
     }
+  }
 
   return (
     <View style={ESTILOS.container}>
@@ -71,44 +87,39 @@ export default function ListaCompras() {
         translucent={true}
         backgroundColor="#F1F1F1"
       />
-      <Text style={ESTILOS.header}>Praticidade na compra:</Text>
+      <Text style={ESTILOS.header}>Planejador de Viagens</Text>
       <View style={ESTILOS.form}>
-        <Text style={ESTILOS.label}>Insira os ingredientes abaixo:</Text>
+        <Text style={ESTILOS.label}>Informe os detalhes da sua viagem:</Text>
         <TextInput
-          placeholder="Ingrediente 1"
+          placeholder="Tipo de viagem (ex: praia, montanha)"
           style={ESTILOS.input}
-          value={ingr1}
-          onChangeText={(texto) => setIngr1(texto)}
+          value={tipoViagem}
+          onChangeText={setTipoViagem}
         />
         <TextInput
-          placeholder="Ingrediente 2"
+          placeholder="Estilo de hospedagem (ex: hotel, hostel)"
           style={ESTILOS.input}
-          value={ingr2}
-          onChangeText={(texto) => setIngr2(texto)}
+          value={estiloHospedagem}
+          onChangeText={setEstiloHospedagem}
         />
         <TextInput
-          placeholder="Ingrediente 3"
+          placeholder="Clima desejado (ex: quente, frio)"
           style={ESTILOS.input}
-          value={ingr3}
-          onChangeText={(texto) => setIngr3(texto)}
+          value={climaDesejado}
+          onChangeText={setClimaDesejado}
         />
         <TextInput
-          placeholder="Ingrediente 4"
+          placeholder="Orçamento estimado"
           style={ESTILOS.input}
-          value={ingr4}
-          onChangeText={(texto) => setIngr4(texto)}
-        />
-        <TextInput
-          placeholder="Almoço ou Jantar"
-          style={ESTILOS.input}
-          value={ocasiao}
-          onChangeText={(texto) => setOcasiao(texto)}
+          value={orcamento}
+          onChangeText={setOrcamento}
+          keyboardType="numeric"
         />
       </View>
 
-      <TouchableOpacity style={ESTILOS.button} onPress={gerarReceita}>
-        <Text style={ESTILOS.buttonText}>Gerar receita</Text>
-        <MaterialCommunityIcons name="food-variant" size={24} color="#FFF" />
+      <TouchableOpacity style={ESTILOS.button} onPress={gerarRoteiro}>
+        <Text style={ESTILOS.buttonText}>Gerar roteiro</Text>
+        <MaterialCommunityIcons name="airplane" size={24} color="#FFF" />
       </TouchableOpacity>
 
       <ScrollView
@@ -118,14 +129,15 @@ export default function ListaCompras() {
       >
         {load && (
           <View style={ESTILOS.content}>
-            <Text style={ESTILOS.title}>Produzindo receita...</Text>
+            <Text style={ESTILOS.title}>Criando seu roteiro...</Text>
             <ActivityIndicator color="#000" size="large" />
           </View>
         )}
 
-        {ingredientes && (
+        {viagem && (
           <View style={ESTILOS.content}>
-            <Text style={ESTILOS.receitaTexto}>{ingredientes}</Text>
+            <Text style={ESTILOS.receitaTitulo}>{tituloViagem}</Text>
+            <Text style={ESTILOS.receitaTexto}>{viagem}</Text>
           </View>
         )}
       </ScrollView>

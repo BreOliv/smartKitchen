@@ -1,4 +1,4 @@
-import {StyleSheet, Text, View, TextInput, TouchableOpacity, Platform, StatusBar, ScrollView, ActivityIndicator, Alert, Keyboard} from "react-native";
+import {StyleSheet,Text,View,TextInput,TouchableOpacity,Platform,StatusBar,ScrollView,ActivityIndicator,Alert,Keyboard,} from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useState } from "react";
 import { GoogleGenerativeAI } from "@google/generative-ai";
@@ -20,55 +20,68 @@ const generationConfig = {
   responseMimeType: "text/plain",
 };
 
-export default function Viagem() {
+export default function Historia() {
   const [load, setLoad] = useState(false);
-  const [viagem, setViagem] = useState("");
+  const [historias, sethistorias] = useState("");
+  const [tituloHistorias, setTituloHistorias] = useState("");
 
-  const [tipoViagem, setTipoViagem] = useState("");
-  const [estiloHospedagem, setEstiloHospedagem] = useState("");
-  const [climaDesejado, setClimaDesejado] = useState("");
-  const [orcamento, setOrcamento] = useState("");
+  const [personagem1, setpersonagem1] = useState("");
+  const [local1, setlocal1] = useState("");
+  const [objeto1, setobjeto1] = useState("");
+  const [tema, settema] = useState("");
 
-  async function gerarRoteiro() {
+  async function gerarHistoria() {
     if (
-      tipoViagem === "" ||
-      estiloHospedagem === "" ||
-      climaDesejado === "" ||
-      orcamento === ""
-    ) {
-      Alert.alert("Atenção", "Informe todos os dados!", [
+      personagem1 === "" ||
+      local1 === "" ||
+      objeto1 === "" ||
+      tema === "" 
+    ){
+      Alert.alert("Atenção", "Informe todos os ingredientes!", [
         { text: "Beleza!" },
       ]);
       return;
     }
-    setViagem("");
+    sethistorias("");
+    setTituloHistorias("");
     setLoad(true);
     Keyboard.dismiss();
 
-    const prompt = `
-    Sugira uma viagem considerando: ${tipoViagem}, ${estiloHospedagem}, ${climaDesejado}, ${orcamento}.
+    const prompt =  `
+    Crie uma história curta utilizando os seguintes elementos: ${personagem1}, ${local1}, ${objeto1}, ${tema}.
     
     IMPORTANTE:
-    - Primeiro escreva o nome da viagem (exemplo: "Roteiro para as Montanhas Geladas"), depois uma quebra de linha (\n).
-    - Em seguida, descreva o roteiro de forma detalhada.
+    - Primeiro escreva o título da história (exemplo: "O Mistério do Relógio Perdido"), depois uma quebra de linha (\n).
+    - Em seguida, escreva a história completa em tom leve e criativo.
     - No final, se possível, adicione um link do YouTube relacionado.
     `;
-    
-    try {
-      const chatSession = model.startChat({
-        generationConfig,
-        history: [],
-      });
 
-      const result = await chatSession.sendMessage(prompt);
-      setViagem(result.response.text());
-    } catch (error) {
-      console.error(error);
-      Alert.alert("Erro", "Não foi possível gerar o roteiro.");
-    } finally {
-      setLoad(false);
+    try {
+        const sessaoChat = model.startChat({
+          generationConfig,
+          history: [],
+        });
+        
+        const resultado = await sessaoChat.sendMessage(prompt);
+        const respostaCompleta = resultado.response.text();
+  
+
+        const linhas = respostaCompleta.split('\n');
+        const tituloExtraido = linhas[0];
+        const conteudoExtraido = linhas.slice(1).join('\n');
+        
+        setTituloHistorias(tituloExtraido);
+        sethistorias(conteudoExtraido);
+  
+  
+        const result = await sessaoChat.sendMessage(prompt);
+        sethistorias(result.response.text());
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoad(false);
+      }
     }
-  }
 
   return (
     <View style={ESTILOS.container}>
@@ -77,39 +90,38 @@ export default function Viagem() {
         translucent={true}
         backgroundColor="#F1F1F1"
       />
-      <Text style={ESTILOS.header}>Planejador de Viagens</Text>
+      <Text style={ESTILOS.header}>História prática:</Text>
       <View style={ESTILOS.form}>
-        <Text style={ESTILOS.label}>Informe os detalhes da sua viagem:</Text>
+        <Text style={ESTILOS.label}>Insira as informações abaixo:</Text>
         <TextInput
-          placeholder="Tipo de viagem (ex: praia, montanha)"
+          placeholder="Personagem 1"
           style={ESTILOS.input}
-          value={tipoViagem}
-          onChangeText={setTipoViagem}
+          value={personagem1}
+          onChangeText={(texto) => setpersonagem1(texto)}
         />
         <TextInput
-          placeholder="Estilo de hospedagem (ex: hotel, hostel)"
+          placeholder="Local 1"
           style={ESTILOS.input}
-          value={estiloHospedagem}
-          onChangeText={setEstiloHospedagem}
+          value={local1}
+          onChangeText={(texto) => setlocal1(texto)}
         />
         <TextInput
-          placeholder="Clima desejado (ex: quente, frio)"
+          placeholder="Objeto 1"
           style={ESTILOS.input}
-          value={climaDesejado}
-          onChangeText={setClimaDesejado}
+          value={objeto1}
+          onChangeText={(texto) => setobjeto1(texto)}
         />
         <TextInput
-          placeholder="Orçamento estimado"
+          placeholder="Tema"
           style={ESTILOS.input}
-          value={orcamento}
-          onChangeText={setOrcamento}
-          keyboardType="numeric"
+          value={tema}
+          onChangeText={(texto) => settema(texto)}
         />
       </View>
 
-      <TouchableOpacity style={ESTILOS.button} onPress={gerarRoteiro}>
-        <Text style={ESTILOS.buttonText}>Gerar roteiro</Text>
-        <MaterialCommunityIcons name="airplane" size={24} color="#FFF" />
+      <TouchableOpacity style={ESTILOS.button} onPress={gerarHistoria}>
+        <Text style={ESTILOS.buttonText}>Gerar história</Text>
+        <MaterialCommunityIcons name="book" size={24} color="#FFF" />
       </TouchableOpacity>
 
       <ScrollView
@@ -119,14 +131,15 @@ export default function Viagem() {
       >
         {load && (
           <View style={ESTILOS.content}>
-            <Text style={ESTILOS.title}>Criando seu roteiro...</Text>
+            <Text style={ESTILOS.title}>Produzindo a história...</Text>
             <ActivityIndicator color="#000" size="large" />
           </View>
         )}
 
-        {viagem && (
+        {historias && (
           <View style={ESTILOS.content}>
-            <Text style={ESTILOS.receitaTexto}>{viagem}</Text>
+            <Text style={ESTILOS.receitaTitulo}>{tituloHistorias}</Text>
+            <Text style={ESTILOS.receitaTexto}>{historias}</Text>
           </View>
         )}
       </ScrollView>

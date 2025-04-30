@@ -20,7 +20,7 @@ const generationConfig = {
   responseMimeType: "text/plain",
 };
 
-export default function App() {
+export default function TelaInicial() {
   const [tituloReceita, setTituloReceita] = useState("");
   const [load, setLoad] = useState(false);
   const [receita, setReceita] = useState("");
